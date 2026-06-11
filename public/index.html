@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Psyche — Rite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&family=Fraunces:ital,wght@1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0912;--s1:#121020;--s2:#181527;--s3:#201c33;
+  --b0:#221e38;--b1:#332d52;
+  --tx:#ece9f7;--tx2:#a09bbe;--tx3:#5e5980;
+  --gold:#e8b14d;--vio:#8b7cf8;--vio2:#b3a8ff;
+  --P:#8b7cf8;--R:#2dd4a7;--I:#e8b14d;--S:#ef7fd3;--M:#ff6b7a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--tx);font-family:Inter,sans-serif;font-size:15px;min-height:100vh}
+h1,h2,h3,.disp{font-family:Syne,sans-serif}
+.mono{font-family:'JetBrains Mono',monospace}
+.serif{font-family:Fraunces,serif;font-style:italic}
+.dim{color:var(--tx2)}.dim2{color:var(--tx3)}
+.wrap{max-width:760px;margin:0 auto;padding:0 18px 60px}
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 0;margin-bottom:10px}
+.logo{font-family:Syne,sans-serif;font-weight:800;font-size:1.2rem;letter-spacing:.5px;cursor:pointer}
+.logo .psi{color:var(--gold)}
+.tag{font-family:'JetBrains Mono',monospace;font-size:.6rem;padding:3px 9px;border-radius:99px;border:1px solid var(--b1);color:var(--tx2)}
+.tag.ai{color:var(--gold);border-color:rgba(232,177,77,.45)}
+.card{background:var(--s1);border:1px solid var(--b0);border-radius:16px;padding:24px;margin-bottom:18px}
+textarea{width:100%;min-height:150px;background:var(--s2);border:1px solid var(--b1);border-radius:12px;color:var(--tx);padding:15px;font-family:Inter,sans-serif;font-size:.92rem;resize:vertical;line-height:1.65}
+textarea:focus,input:focus{outline:none;border-color:var(--vio)}
+input{background:var(--s2);border:1px solid var(--b1);border-radius:9px;color:var(--tx);padding:10px 13px;font-size:.85rem;font-family:Inter,sans-serif}
+.btn{background:var(--vio);color:#fff;border:none;border-radius:10px;padding:12px 24px;font-size:.86rem;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;transition:transform .12s,background .2s}
+.btn:hover{background:var(--vio2);transform:translateY(-1px)}
+.btn:disabled{opacity:.45;cursor:wait;transform:none}
+.btn.gold{background:var(--gold);color:#1a1407}
+.btn.gold:hover{background:#f5c46a}
+.btn.ghost{background:transparent;border:1px solid var(--b1);color:var(--tx2)}
+.btn.ghost:hover{color:var(--tx);border-color:var(--vio);background:transparent}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.sect{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:2.4px;text-transform:uppercase;color:var(--tx3);margin:18px 0 10px}
+.overlay{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;z-index:99;overflow-y:auto}
+.auth{width:min(380px,92vw);background:var(--s1);border:1px solid var(--b1);border-radius:18px;padding:34px}
+.auth input{width:100%;margin-bottom:11px}
+.err{color:var(--M);font-size:.74rem;min-height:18px;margin-bottom:4px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--b1);padding:10px 20px;border-radius:10px;font-size:.8rem;opacity:0;transition:opacity .3s;pointer-events:none;z-index:120;max-width:90vw}
+.toast.show{opacity:1}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:7px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.hero{text-align:center;padding:54px 10px 40px}
+.hero .psiBig{font-size:3rem;color:var(--gold)}
+.hero h1{font-size:2rem;font-weight:800;margin:14px 0 10px}
+.hero p{color:var(--tx2);max-width:430px;margin:0 auto 28px;line-height:1.7;font-size:.92rem}
+.penta{display:block;margin:0 auto 8px}
+.step-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.dimchip{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:2px;padding:4px 12px;border-radius:99px;border:1px solid}
+.q{font-family:Syne,sans-serif;font-weight:700;font-size:1.25rem;line-height:1.45;margin-bottom:6px}
+.hint{color:var(--tx3);font-size:.78rem;margin-bottom:16px}
+.cc{font-family:'JetBrains Mono',monospace;font-size:.64rem;color:var(--tx3);text-align:right;margin-top:7px}
+.cc.ok{color:var(--R)}
+.navrow{display:flex;justify-content:space-between;margin-top:18px}
+.hitem{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border:1px solid var(--b0);border-radius:12px;margin-bottom:9px;background:var(--s2);cursor:pointer}
+.hitem:hover{border-color:var(--vio)}
+.hitem .del{color:var(--tx3);cursor:pointer;font-size:.8rem;padding:4px 8px}
+.hitem .del:hover{color:var(--M)}
+.empty{text-align:center;padding:38px 18px;color:var(--tx3);font-size:.85rem}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.68rem;color:var(--tx2);margin-top:8px}
+.legend span::before{content:'';display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;background:var(--c)}
+canvas{max-width:100%}
+/* ── REVEAL ── */
+.reveal{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 30%,#16122a 0%,var(--bg) 65%);z-index:110;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px 22px;cursor:pointer;user-select:none}
+.rv{max-width:560px;width:100%;animation:rvin .55s cubic-bezier(.2,.9,.3,1)}
+@keyframes rvin{from{opacity:0;transform:translateY(26px) scale(.97)}to{opacity:1;transform:none}}
+.rv .kicker{font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:3.5px;text-transform:uppercase;color:var(--tx3);margin-bottom:18px}
+.rv .big{font-family:Syne,sans-serif;font-weight:800;font-size:clamp(2rem,8vw,3.2rem);line-height:1.1;background:linear-gradient(95deg,var(--gold),var(--vio2));-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:14px}
+.rv .sub{font-family:Fraunces,serif;font-style:italic;color:var(--tx2);font-size:1.02rem;line-height:1.75;max-width:460px;margin:0 auto}
+.rv .tcard{background:rgba(255,255,255,.035);border:1px solid var(--b1);border-radius:14px;padding:16px 18px;margin:9px 0;text-align:left}
+.rv .tcard .nm{font-weight:600;font-size:.95rem}
+.rv .tcard .ev{font-family:Fraunces,serif;font-style:italic;font-size:.82rem;color:var(--tx2);margin-top:6px}
+.rvdots{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);display:flex;gap:8px}
+.rvdots i{width:7px;height:7px;border-radius:50%;background:var(--b1);transition:background .3s}
+.rvdots i.on{background:var(--gold)}
+.rvskip{position:fixed;top:22px;right:24px;color:var(--tx3);font-size:.74rem;cursor:pointer;z-index:111}
+.rvskip:hover{color:var(--tx)}
+.rvtap{position:fixed;bottom:54px;left:50%;transform:translateX(-50%);color:var(--tx3);font-size:.68rem;font-family:'JetBrains Mono',monospace;letter-spacing:1px}
+/* report (post-reveal full view) */
+.pbar{margin:10px 0}
+.pbar .lab{display:flex;justify-content:space-between;font-size:.74rem;margin-bottom:5px}
+.pbar .trk{height:7px;background:var(--s3);border-radius:99px;overflow:hidden}
+.pbar .fil{height:100%;border-radius:99px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:680px){.grid2{grid-template-columns:1fr}}
+.trait{border:1px solid var(--b0);border-radius:12px;padding:14px 16px;margin-bottom:10px;background:var(--s2)}
+.trait .nm{font-weight:600;font-size:.88rem}
+.trait .ev{font-family:Fraunces,serif;font-style:italic;font-size:.79rem;color:var(--tx2);margin-top:6px;border-left:2px solid var(--b1);padding-left:10px}
+.trait .ex{font-size:.76rem;color:var(--tx3);margin-top:5px}
+.chip{display:inline-block;padding:5px 12px;border-radius:99px;font-size:.73rem;margin:3px 4px 3px 0;border:1px solid var(--b1);color:var(--tx2)}
+.chip.sh{border-color:rgba(255,107,122,.4);color:var(--M)}
+.chip.em{border-color:rgba(45,212,167,.4);color:var(--R)}
+.tabs{display:flex;gap:6px;margin:6px 0 20px}
+.tab{padding:8px 16px;border-radius:9px;font-size:.8rem;font-weight:500;color:var(--tx2);cursor:pointer;border:1px solid transparent}
+.tab.on{background:var(--s2);color:var(--tx);border-color:var(--b1)}
+@media (prefers-reduced-motion: reduce){.rv{animation:none}.btn{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="logo" onclick="show('home')"><span class="psi">Ψ</span> PSYCHE <span class="mono" style="font-size:.58rem;color:var(--tx3)">v11 RITE</span></div>
+  <div class="row">
+    <span id="engineTag" class="tag">…</span>
+    <span id="quotaTag" class="tag"></span>
+    <button class="btn ghost" style="padding:6px 13px;font-size:.72rem" onclick="logout()">Sign out</button>
+  </div>
+</header>
+
+<div id="v-home">
+  <div class="hero">
+    <svg id="pentaHero" class="penta" width="120" height="116" viewBox="0 0 120 116"></svg>
+    <h1>The rite of self-reading</h1>
+    <p>Five questions. One for each axis of PRISM. Answer honestly — the oracle reads what you write, not what you wish.</p>
+    <div class="row" style="justify-content:center">
+      <button class="btn gold" onclick="startJourney()">Begin the rite</button>
+      <button class="btn ghost" onclick="show('quick')">Quick mode</button>
+    </div>
+  </div>
+  <div class="tabs" style="justify-content:center">
+    <div class="tab" onclick="show('history')">History</div>
+    <div class="tab" onclick="show('evolution')">Evolution</div>
+  </div>
+</div>
+
+<div id="v-journey" style="display:none">
+  <div class="card">
+    <svg id="pentaProg" class="penta" width="92" height="89" viewBox="0 0 120 116"></svg>
+    <div class="step-head">
+      <span class="dimchip" id="jChip"></span>
+      <span class="mono dim2" style="font-size:.64rem" id="jStep"></span>
+    </div>
+    <div class="q" id="jQ"></div>
+    <div class="hint" id="jHint"></div>
+    <textarea id="jText" placeholder="Write freely — first thoughts are the truest."></textarea>
+    <div class="cc" id="jCC">0 chars · 30 minimum</div>
+    <div class="navrow">
+      <button class="btn ghost" id="jBack" onclick="jNav(-1)">Back</button>
+      <button class="btn" id="jNext" onclick="jNav(1)">Next</button>
+    </div>
+  </div>
+</div>
+
+<div id="v-quick" style="display:none">
+  <div class="card">
+    <div class="sect">Quick mode — free writing</div>
+    <textarea id="qText" style="min-height:190px" placeholder="Skip the rite. Write anything real about yourself — how you think, what you chase, who you are under pressure. 40+ characters."></textarea>
+    <div class="navrow">
+      <button class="btn ghost" onclick="show('home')">Back</button>
+      <button class="btn gold" id="qGo" onclick="runQuick()">Consult the oracle</button>
+    </div>
+  </div>
+</div>
+
+<div id="v-report" style="display:none"><div id="result"></div>
+  <div class="row" style="justify-content:center;margin-top:4px">
+    <button class="btn ghost" onclick="show('home')">Home</button>
+    <button class="btn" onclick="startJourney()">New reading</button>
+  </div>
+</div>
+
+<div id="v-history" style="display:none">
+  <div class="card"><div class="sect">Past readings</div><div id="histList"></div></div>
+  <button class="btn ghost" onclick="show('home')">Back</button>
+</div>
+
+<div id="v-evolution" style="display:none">
+  <div class="card">
+    <div class="sect">PRISM over time</div>
+    <canvas id="evoChart" width="700" height="300"></canvas>
+    <div class="legend">
+      <span style="--c:var(--P)">Perception</span><span style="--c:var(--R)">Response</span>
+      <span style="--c:var(--I)">Identity</span><span style="--c:var(--S)">Social</span>
+      <span style="--c:var(--M)">Motivation</span>
+    </div>
+    <div id="evoNote" class="dim" style="font-size:.8rem;margin-top:12px"></div>
+  </div>
+  <button class="btn ghost" onclick="show('home')">Back</button>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DIMS=['P','R','I','S','M'];
+const DIMNAME={P:'Perception',R:'Response',I:'Identity',S:'Social',M:'Motivation'};
+const DIMCOL={P:'#8b7cf8',R:'#2dd4a7',I:'#e8b14d',S:'#ef7fd3',M:'#ff6b7a'};
+const PROMPTS={
+ P:{q:'How do you make sense of things you don\u2019t understand?',h:'Think of something complicated you figured out recently — what did your mind actually do?'},
+ R:{q:'Describe a recent moment of pressure or chaos.',h:'A deadline, a fight, a failure. What did you actually do — not what you wish you did?'},
+ I:{q:'Who are you when nobody is watching?',h:'The rules you refuse to break. The things you do that no one asked for.'},
+ S:{q:'Describe your people.',h:'Who is in your circle, how big is it, and what role do you play in it?'},
+ M:{q:'What are you actually chasing?',h:'The life you\u2019re building toward. Be specific — vague dreams get vague readings.'}
+};
+const API={
+  token:localStorage.getItem('p11_t')||localStorage.getItem('p10_t')||'',
+  async req(m,u,b){
+    const r=await fetch(u,{method:m,headers:{'Content-Type':'application/json',...(this.token?{Authorization:'Bearer '+this.token}:{})},body:b?JSON.stringify(b):undefined});
+    const d=await r.json().catch(()=>({}));
+    if(r.status===401&&this.token){logout();throw new Error('Session expired');}
+    if(!r.ok)throw new Error(d.error||('Error '+r.status));
+    return d;
+  }
+};
+function logout(){localStorage.removeItem('p11_t');localStorage.removeItem('p10_t');location.reload();}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+const VIEWS=['home','journey','quick','report','history','evolution'];
+function show(v){for(const x of VIEWS)document.getElementById('v-'+x).style.display=x===v?'':'none';
+  if(v==='history')loadHistory(); if(v==='evolution')loadEvolution(); window.scrollTo({top:0});}
+
+/* ── PENTAGON (signature element) ── */
+function pentaPts(cx,cy,R){return DIMS.map((k,i)=>{const a=-Math.PI/2+i*2*Math.PI/5;return[cx+Math.cos(a)*R,cy+Math.sin(a)*R,k];});}
+function drawPenta(svgId, litCount, glow){
+  const svg=document.getElementById(svgId);if(!svg)return;
+  const pts=pentaPts(60,60,46);
+  let s='';
+  s+='<polygon points="'+pts.map(p=>p[0]+','+p[1]).join(' ')+'" fill="none" stroke="#332d52" stroke-width="1.2"/>';
+  for(let i=0;i<5;i++){
+    const [x,y,k]=pts[i];const lit=i<litCount;
+    s+=`<circle cx="${x}" cy="${y}" r="${lit?6:4}" fill="${lit?DIMCOL[k]:'#221e38'}" stroke="${lit?DIMCOL[k]:'#332d52'}" stroke-width="1.5"${lit&&glow?` opacity="0.95"`:''}/>`;
+    if(lit)s+=`<circle cx="${x}" cy="${y}" r="11" fill="none" stroke="${DIMCOL[k]}" stroke-width="1" opacity="0.3"/>`;
+  }
+  svg.innerHTML=s;
+}
+
+/* ── AUTH ── */
+function renderAuth(){
+  const o=document.createElement('div');o.className='overlay';o.id='authO';
+  o.innerHTML=`<div class="auth">
+    <div class="logo" style="margin-bottom:4px"><span class="psi">Ψ</span> PSYCHE</div>
+    <div class="dim" style="font-size:.76rem;margin-bottom:20px">v11 Rite — five questions, one reading.</div>
+    <div id="auName" style="display:none"><input id="aName" placeholder="Your name"></div>
+    <input id="aEmail" type="email" placeholder="Email">
+    <input id="aPass" type="password" placeholder="Password (6+ chars)">
+    <div class="err" id="aErr"></div>
+    <button class="btn gold" style="width:100%" id="aBtn" onclick="authGo('login')">Sign in</button>
+    <div class="dim" style="text-align:center;margin-top:13px;font-size:.74rem;cursor:pointer;color:var(--vio2)" id="aTog" onclick="authTog()">New here? Create an account</div>
+  </div>`;
+  document.body.appendChild(o);
+  document.getElementById('aPass').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('aBtn').click();});
+}
+function authTog(){
+  const reg=document.getElementById('auName').style.display!=='none';
+  document.getElementById('auName').style.display=reg?'none':'block';
+  document.getElementById('aBtn').textContent=reg?'Sign in':'Create account';
+  document.getElementById('aBtn').onclick=()=>authGo(reg?'login':'register');
+  document.getElementById('aTog').textContent=reg?'New here? Create an account':'Have an account? Sign in';
+}
+async function authGo(mode){
+  const email=document.getElementById('aEmail').value.trim(),
+    pass=document.getElementById('aPass').value,
+    name=document.getElementById('aName')?.value.trim()||email.split('@')[0];
+  try{
+    const d=await API.req('POST','/api/auth/'+mode,mode==='login'?{email,password:pass}:{email,name,password:pass});
+    API.token=d.token;localStorage.setItem('p11_t',d.token);
+    document.getElementById('authO').remove();boot();
+  }catch(e){document.getElementById('aErr').textContent=e.message;}
+}
+
+/* ── JOURNEY ── */
+let J={i:0,ans:{P:'',R:'',I:'',S:'',M:''}};
+function startJourney(){J={i:0,ans:{P:'',R:'',I:'',S:'',M:''}};show('journey');renderStep();}
+function renderStep(){
+  const k=DIMS[J.i],col=DIMCOL[k];
+  drawPenta('pentaProg',J.i,false);
+  const chip=document.getElementById('jChip');
+  chip.textContent=DIMNAME[k].toUpperCase();chip.style.color=col;chip.style.borderColor=col+'66';
+  document.getElementById('jStep').textContent=`STEP ${J.i+1} / 5`;
+  document.getElementById('jQ').textContent=PROMPTS[k].q;
+  document.getElementById('jHint').textContent=PROMPTS[k].h;
+  const ta=document.getElementById('jText');ta.value=J.ans[k];updCC();ta.focus();
+  document.getElementById('jBack').style.visibility=J.i===0?'hidden':'visible';
+  document.getElementById('jNext').textContent=J.i===4?'Consult the oracle':'Next';
+}
+function updCC(){
+  const n=document.getElementById('jText').value.trim().length;
+  const cc=document.getElementById('jCC');
+  cc.textContent=`${n} chars · ${n>=30?'enough signal':'30 minimum'}`;
+  cc.className='cc'+(n>=30?' ok':'');
+}
+function jNav(d){
+  const k=DIMS[J.i];J.ans[k]=document.getElementById('jText').value.trim();
+  if(d>0&&J.ans[k].length<30){toast('Thoda aur likho — 30 characters minimum');return;}
+  if(d>0&&J.i===4){submitJourney();return;}
+  J.i=Math.max(0,Math.min(4,J.i+d));renderStep();
+}
+function buildText(){
+  return DIMS.map(k=>`${DIMNAME[k].toUpperCase()} — ${PROMPTS[k].q}\n${J.ans[k]}`).join('\n\n');
+}
+async function submitJourney(){
+  const btn=document.getElementById('jNext');btn.disabled=true;btn.innerHTML='<span class="spin"></span>Reading…';
+  drawPenta('pentaProg',5,true);
+  try{
+    const d=await API.req('POST','/api/analyze',{text:buildText(),label:'Rite'});
+    refreshMe();startReveal(d);
+  }catch(e){toast(e.message);}
+  btn.disabled=false;btn.textContent='Consult the oracle';
+}
+async function runQuick(){
+  const text=document.getElementById('qText').value.trim();
+  if(text.length<40){toast('40+ characters chahiye');return;}
+  const btn=document.getElementById('qGo');btn.disabled=true;btn.innerHTML='<span class="spin"></span>Reading…';
+  try{
+    const d=await API.req('POST','/api/analyze',{text,label:'Quick'});
+    refreshMe();startReveal(d);
+    if(d.cached)toast('Same text — served from cache');
+  }catch(e){toast(e.message);}
+  btn.disabled=false;btn.textContent='Consult the oracle';
+}
+
+/* ── REVEAL ── */
+let RV={slides:[],i:0,data:null};
+function startReveal(d){
+  const r=d.result;RV.data=d;RV.i=0;RV.slides=[];
+  RV.slides.push(`<div class="kicker">Your archetype</div><div class="big">${esc(r.archetype.primary)}</div><div class="sub">${esc(r.archetype.description||'')}</div><div class="mono dim2" style="font-size:.62rem;margin-top:16px">confidence ${(r.archetype.confidence*100|0)}% · ${d.engine==='claude'?'Claude AI':'rule engine'}</div>`);
+  RV.slides.push(`<div class="kicker">Your PRISM</div><canvas id="rvRadar" width="340" height="300" style="margin:0 auto"></canvas><div class="sub" style="font-size:.84rem">${DIMS.map(k=>`<span style="color:${DIMCOL[k]}">${DIMNAME[k]} ${r.prism[k]}</span>`).join(' · ')}</div>`);
+  const t3=r.traits.slice(0,3);
+  RV.slides.push(`<div class="kicker">What the text revealed</div>${t3.map(t=>`<div class="tcard"><div class="nm" style="color:${DIMCOL[t.dim]||'var(--tx)'}">${esc(t.name)} <span class="mono dim2" style="font-size:.62rem">${t.score}</span></div>${t.evidence?`<div class="ev">"${esc(t.evidence)}"</div>`:''}</div>`).join('')}`);
+  if(r.shadow?.length)RV.slides.push(`<div class="kicker">Your shadow</div><div class="big" style="font-size:clamp(1.3rem,5vw,1.9rem)">What you don\u2019t see</div>${r.shadow.slice(0,2).map(s=>`<div class="sub" style="margin-top:14px">${esc(s)}</div>`).join('')}`);
+  if(r.careers?.length)RV.slides.push(`<div class="kicker">Paths that fit</div>${r.careers.slice(0,4).map(c=>`<div class="tcard"><div class="nm" style="color:var(--vio2)">${esc(c.title)}</div><div class="ev">${esc(c.reason||'')}</div></div>`).join('')}`);
+  RV.slides.push(`<div class="kicker">The reading</div><div class="sub" style="font-size:1.05rem">${esc(r.narrative||'')}</div><div class="row" style="justify-content:center;margin-top:26px"><button class="btn gold" onclick="event.stopPropagation();endReveal()">Full report</button>${d.id?`<button class="btn ghost" onclick="event.stopPropagation();shareIt('${d.id}')">Share</button>`:''}</div>`);
+  const o=document.createElement('div');o.className='reveal';o.id='rvO';
+  o.innerHTML=`<div class="rvskip" onclick="event.stopPropagation();endReveal()">Skip ✕</div><div class="rv" id="rvBody"></div><div class="rvtap" id="rvTap">tap to continue</div><div class="rvdots" id="rvDots"></div>`;
+  o.addEventListener('click',()=>rvNext());
+  document.body.appendChild(o);
+  rvShow();
+}
+function rvShow(){
+  const b=document.getElementById('rvBody');
+  b.style.animation='none';void b.offsetWidth;b.style.animation='';
+  b.innerHTML=RV.slides[RV.i];
+  document.getElementById('rvDots').innerHTML=RV.slides.map((_,j)=>`<i class="${j<=RV.i?'on':''}"></i>`).join('');
+  document.getElementById('rvTap').style.display=RV.i>=RV.slides.length-1?'none':'';
+  if(RV.i===1)requestAnimationFrame(()=>drawRadar('rvRadar',RV.data.result.prism,true));
+}
+function rvNext(){if(RV.i<RV.slides.length-1){RV.i++;rvShow();}}
+function endReveal(){
+  document.getElementById('rvO')?.remove();
+  renderReport(RV.data);show('report');
+}
+
+/* ── FULL REPORT ── */
+function renderReport(d){
+  const r=d.result;
+  document.getElementById('result').innerHTML=`
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <div>
+        <div class="disp" style="font-weight:800;font-size:1.6rem;background:linear-gradient(95deg,var(--gold),var(--vio2));-webkit-background-clip:text;background-clip:text;color:transparent">${esc(r.archetype.primary)}</div>
+        <div class="mono dim2" style="font-size:.64rem;margin-top:3px">confidence ${(r.archetype.confidence*100|0)}% · ${d.engine==='claude'?'Claude AI':'rule engine'}</div>
+      </div>
+      ${d.id?`<button class="btn ghost" onclick="shareIt('${d.id}')">Share</button>`:''}
+    </div>
+    <div class="serif dim" style="margin-top:12px;line-height:1.75;font-size:.95rem">${esc(r.narrative||r.archetype.description||'')}</div>
+    <div class="grid2" style="margin-top:22px">
+      <div><div class="sect">PRISM dimensions</div>
+        ${DIMS.map(k=>`<div class="pbar"><div class="lab"><span>${DIMNAME[k]}</span><span class="mono dim">${r.prism[k]}</span></div><div class="trk"><div class="fil" style="width:0;background:${DIMCOL[k]}" data-w="${r.prism[k]}%"></div></div></div>`).join('')}
+      </div>
+      <div><div class="sect">Radar</div><canvas id="radar" width="340" height="290"></canvas></div>
+    </div>
+    <div class="sect">Traits (${r.traits.length})</div>
+    ${r.traits.map(t=>`<div class="trait">
+      <div class="row" style="justify-content:space-between"><span class="nm" style="color:${DIMCOL[t.dim]||'var(--tx)'}">${esc(t.name)}</span><span class="mono dim" style="font-size:.7rem">${t.score}</span></div>
+      ${t.evidence?`<div class="ev">"${esc(t.evidence)}"</div>`:''}
+      ${t.explanation?`<div class="ex">${esc(t.explanation)}</div>`:''}
+    </div>`).join('')}
+    ${r.shadow?.length?`<div class="sect">Shadow</div>${r.shadow.map(s=>`<span class="chip sh">${esc(s)}</span>`).join('')}`:''}
+    ${r.emergent?.length?`<div class="sect">Emergent</div>${r.emergent.map(s=>`<span class="chip em">${esc(s)}</span>`).join('')}`:''}
+    ${r.careers?.length?`<div class="sect">Career directions</div>${r.careers.map(c=>`<div class="trait"><div class="row" style="justify-content:space-between"><span class="nm" style="color:var(--vio2)">${esc(c.title)}</span><span class="mono dim" style="font-size:.7rem">${c.fit?'fit '+c.fit:''}</span></div><div class="ex">${esc(c.reason||'')}${c.from?` <span class="dim2">· via ${esc(c.from)}</span>`:''}</div></div>`).join('')}`:''}
+  </div>`;
+  requestAnimationFrame(()=>{
+    document.querySelectorAll('#result .fil').forEach(f=>f.style.width=f.dataset.w);
+    drawRadar('radar',r.prism,false);
+  });
+}
+
+function drawRadar(id,p,light){
+  const c=document.getElementById(id);if(!c)return;
+  const ctx=c.getContext('2d'),W=c.width,H=c.height,cx=W/2,cy=H/2,R=Math.min(W,H)/2-44;
+  ctx.clearRect(0,0,W,H);
+  const pt=(i,v)=>{const a=-Math.PI/2+i*2*Math.PI/5;return[cx+Math.cos(a)*R*v,cy+Math.sin(a)*R*v];};
+  ctx.strokeStyle='#332d52';ctx.lineWidth=1;
+  for(const g of [.33,.66,1]){ctx.beginPath();for(let i=0;i<=5;i++){const[x,y]=pt(i%5,g);i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();}
+  for(let i=0;i<5;i++){const[x,y]=pt(i,1);ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(x,y);ctx.stroke();}
+  ctx.beginPath();
+  for(let i=0;i<=5;i++){const k=DIMS[i%5],[x,y]=pt(i%5,p[k]/100);i?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+  ctx.closePath();ctx.fillStyle='rgba(232,177,77,.16)';ctx.fill();
+  ctx.strokeStyle='#e8b14d';ctx.lineWidth=2;ctx.stroke();
+  ctx.font='600 11px Inter';ctx.textAlign='center';ctx.textBaseline='middle';
+  for(let i=0;i<5;i++){const k=DIMS[i],[x,y]=pt(i,1.2);ctx.fillStyle=DIMCOL[k];ctx.fillText(DIMNAME[k],x,y);}
+}
+
+/* ── HISTORY / EVOLUTION ── */
+async function loadHistory(){
+  const el=document.getElementById('histList');
+  try{
+    const d=await API.req('GET','/api/analyses');
+    if(!d.analyses.length){el.innerHTML='<div class="empty">No readings yet — begin the rite.</div>';return;}
+    el.innerHTML=d.analyses.slice().reverse().map(a=>`<div class="hitem" onclick="openSnap('${a._id}')">
+      <div><div style="font-weight:600;font-size:.85rem">${esc(a.result?.archetype?.primary||'Reading')}${a.label?` <span class="dim" style="font-weight:400">· ${esc(a.label)}</span>`:''}</div>
+      <div class="mono dim2" style="font-size:.64rem;margin-top:3px">${new Date(a.createdAt).toLocaleString()} · ${a.engine==='claude'?'Claude AI':'rules'}</div></div>
+      <span class="del" onclick="event.stopPropagation();delSnap('${a._id}')">✕</span>
+    </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty">'+esc(e.message)+'</div>';}
+}
+async function openSnap(id){
+  try{const d=await API.req('GET','/api/analyses/'+id);renderReport({id:d._id,result:d.result,engine:d.engine});show('report');}
+  catch(e){toast(e.message);}
+}
+async function delSnap(id){
+  try{await API.req('DELETE','/api/analyses/'+id);loadHistory();toast('Reading deleted');}
+  catch(e){toast(e.message);}
+}
+async function loadEvolution(){
+  const note=document.getElementById('evoNote');
+  try{
+    const d=await API.req('GET','/api/analyses');
+    const snaps=d.analyses.filter(a=>a.result?.prism);
+    if(snaps.length<2){note.textContent='Need at least 2 readings to chart your evolution.';drawEvo([]);return;}
+    drawEvo(snaps);
+    const f=snaps[0].result.prism,l=snaps[snaps.length-1].result.prism;
+    const deltas=DIMS.map(k=>({k,d:l[k]-f[k]})).sort((a,b)=>Math.abs(b.d)-Math.abs(a.d));
+    note.textContent=`${snaps.length} readings. Biggest shift: ${DIMNAME[deltas[0].k]} ${deltas[0].d>=0?'+':''}${deltas[0].d} since your first.`;
+  }catch(e){note.textContent=e.message;}
+}
+function drawEvo(snaps){
+  const c=document.getElementById('evoChart'),ctx=c.getContext('2d'),W=c.width,H=c.height;
+  ctx.clearRect(0,0,W,H);
+  const padL=34,padR=14,padT=14,padB=26,iw=W-padL-padR,ih=H-padT-padB;
+  ctx.strokeStyle='#221e38';ctx.fillStyle='#5e5980';ctx.font='10px JetBrains Mono';ctx.textAlign='right';
+  for(const v of [0,25,50,75,100]){const y=padT+ih*(1-v/100);ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(W-padR,y);ctx.stroke();ctx.fillText(v,padL-7,y+3);}
+  if(snaps.length<2)return;
+  const X=i=>padL+iw*(i/(snaps.length-1));
+  for(const k of DIMS){
+    ctx.beginPath();ctx.strokeStyle=DIMCOL[k];ctx.lineWidth=2;
+    snaps.forEach((s,i)=>{const y=padT+ih*(1-s.result.prism[k]/100);i?ctx.lineTo(X(i),y):ctx.moveTo(X(i),y);});
+    ctx.stroke();
+    snaps.forEach((s,i)=>{const y=padT+ih*(1-s.result.prism[k]/100);ctx.beginPath();ctx.arc(X(i),y,3,0,7);ctx.fillStyle=DIMCOL[k];ctx.fill();});
+  }
+  ctx.fillStyle='#5e5980';ctx.textAlign='center';
+  snaps.forEach((s,i)=>{if(snaps.length<=8||i%Math.ceil(snaps.length/8)===0)ctx.fillText(new Date(s.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric'}),X(i),H-8);});
+}
+
+/* ── SHARE / SHARED VIEW ── */
+async function shareIt(id){
+  try{
+    const d=await API.req('POST','/api/share',{id});
+    const url=location.origin+'/s/'+d.shareId;
+    await navigator.clipboard.writeText(url).catch(()=>{});
+    toast('Link copied: '+url);
+  }catch(e){toast(e.message);}
+}
+async function checkShare(){
+  const id=location.hash.slice(3);
+  try{
+    const r=await fetch('/api/share/'+id);const d=await r.json();
+    if(!r.ok)throw new Error(d.error||'Invalid link');
+    document.getElementById('authO')?.remove();
+    document.querySelector('header .row').style.display='none';
+    startReveal({id:'',result:d.result,engine:'claude'});
+    toast(`A reading from ${d.name||'a Psyche user'}`);
+  }catch(e){toast(e.message);}
+}
+
+/* ── BOOT ── */
+async function refreshMe(){
+  try{
+    const me=await API.req('GET','/api/me');
+    const t=document.getElementById('engineTag');
+    t.textContent=me.aiEnabled?'◉ Claude AI':'◉ Rule engine';
+    t.className='tag'+(me.aiEnabled?' ai':'');
+    document.getElementById('quotaTag').textContent=`${me.usedToday}/${me.dailyLimit} today`;
+  }catch(e){}
+}
+function boot(){refreshMe();drawPenta('pentaHero',5,true);show('home');}
+document.getElementById('jText')?.addEventListener('input',updCC);
+window.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('jText').addEventListener('input',updCC);
+  if(location.hash.startsWith('#s=')){checkShare();return;}
+  if(API.token)boot();else{drawPenta('pentaHero',5,true);renderAuth();}
+});
+</script>
+</body>
+</html>

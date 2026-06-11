@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Psyche — Rite</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0a0912">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<title>Psyche — Keymaster</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&family=Fraunces:ital,wght@1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -105,10 +108,11 @@ canvas{max-width:100%}
 <body>
 <div class="wrap">
 <header>
-  <div class="logo" onclick="show('home')"><span class="psi">Ψ</span> PSYCHE <span class="mono" style="font-size:.58rem;color:var(--tx3)">v11 RITE</span></div>
+  <div class="logo" onclick="show('home')"><span class="psi">Ψ</span> PSYCHE <span class="mono" style="font-size:.58rem;color:var(--tx3)">v12 KEYMASTER</span></div>
   <div class="row">
     <span id="engineTag" class="tag">…</span>
     <span id="quotaTag" class="tag"></span>
+    <button class="btn ghost" style="padding:6px 13px;font-size:.72rem" onclick="openAccount()">Account</button>
     <button class="btn ghost" style="padding:6px 13px;font-size:.72rem" onclick="logout()">Sign out</button>
   </div>
 </header>
@@ -230,38 +234,100 @@ function drawPenta(svgId, litCount, glow){
   svg.innerHTML=s;
 }
 
-/* ── AUTH ── */
+/* ── AUTH (v12: login / register / forgot via recovery key) ── */
+let AUTH_MODE='login';
 function renderAuth(){
   const o=document.createElement('div');o.className='overlay';o.id='authO';
   o.innerHTML=`<div class="auth">
     <div class="logo" style="margin-bottom:4px"><span class="psi">Ψ</span> PSYCHE</div>
-    <div class="dim" style="font-size:.76rem;margin-bottom:20px">v11 Rite — five questions, one reading.</div>
-    <div id="auName" style="display:none"><input id="aName" placeholder="Your name"></div>
+    <div class="dim" style="font-size:.76rem;margin-bottom:20px">v12 Keymaster — your key, your door.</div>
+    <div id="fName" style="display:none"><input id="aName" placeholder="Your name"></div>
     <input id="aEmail" type="email" placeholder="Email">
+    <div id="fKey" style="display:none"><input id="aKey" placeholder="Recovery key (PSY-XXXX-XXXX-XXXX)"></div>
     <input id="aPass" type="password" placeholder="Password (6+ chars)">
     <div class="err" id="aErr"></div>
-    <button class="btn gold" style="width:100%" id="aBtn" onclick="authGo('login')">Sign in</button>
-    <div class="dim" style="text-align:center;margin-top:13px;font-size:.74rem;cursor:pointer;color:var(--vio2)" id="aTog" onclick="authTog()">New here? Create an account</div>
+    <button class="btn gold" style="width:100%" id="aBtn" onclick="authGo()">Sign in</button>
+    <div style="display:flex;justify-content:space-between;margin-top:13px;font-size:.72rem">
+      <span style="cursor:pointer;color:var(--vio2)" id="aTog" onclick="setMode(AUTH_MODE==='register'?'login':'register')">Create an account</span>
+      <span style="cursor:pointer;color:var(--tx3)" id="aForgot" onclick="setMode('forgot')">Forgot password?</span>
+    </div>
   </div>`;
   document.body.appendChild(o);
   document.getElementById('aPass').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('aBtn').click();});
+  setMode('login');
 }
-function authTog(){
-  const reg=document.getElementById('auName').style.display!=='none';
-  document.getElementById('auName').style.display=reg?'none':'block';
-  document.getElementById('aBtn').textContent=reg?'Sign in':'Create account';
-  document.getElementById('aBtn').onclick=()=>authGo(reg?'login':'register');
-  document.getElementById('aTog').textContent=reg?'New here? Create an account':'Have an account? Sign in';
+function setMode(m){
+  AUTH_MODE=m;
+  document.getElementById('fName').style.display = m==='register'?'block':'none';
+  document.getElementById('fKey').style.display  = m==='forgot'?'block':'none';
+  document.getElementById('aBtn').textContent = m==='login'?'Sign in':m==='register'?'Create account':'Reset password';
+  document.getElementById('aPass').placeholder = m==='forgot'?'NEW password (6+ chars)':'Password (6+ chars)';
+  document.getElementById('aTog').textContent = m==='register'?'Have an account? Sign in':'Create an account';
+  document.getElementById('aForgot').style.display = m==='forgot'?'none':'inline';
+  document.getElementById('aErr').textContent='';
 }
-async function authGo(mode){
+async function authGo(){
   const email=document.getElementById('aEmail').value.trim(),
     pass=document.getElementById('aPass').value,
-    name=document.getElementById('aName')?.value.trim()||email.split('@')[0];
+    name=document.getElementById('aName')?.value.trim()||email.split('@')[0],
+    key=document.getElementById('aKey')?.value.trim();
+  const err=document.getElementById('aErr');err.textContent='';
   try{
-    const d=await API.req('POST','/api/auth/'+mode,mode==='login'?{email,password:pass}:{email,name,password:pass});
+    let d;
+    if(AUTH_MODE==='login')d=await API.req('POST','/api/auth/login',{email,password:pass});
+    else if(AUTH_MODE==='register')d=await API.req('POST','/api/auth/register',{email,name,password:pass});
+    else d=await API.req('POST','/api/auth/forgot',{email,recoveryKey:key,newPassword:pass});
     API.token=d.token;localStorage.setItem('p11_t',d.token);
-    document.getElementById('authO').remove();boot();
-  }catch(e){document.getElementById('aErr').textContent=e.message;}
+    document.getElementById('authO').remove();
+    if(d.recoveryKey)showKeyModal(d.recoveryKey, AUTH_MODE==='forgot'?'Password reset! Here is your NEW recovery key — the old one is now dead.':'Account created! Save this recovery key — it is the ONLY way back in if you forget your password.', ()=>boot());
+    else boot();
+  }catch(e){err.textContent=e.message;}
+}
+function showKeyModal(key,msg,onDone){
+  const o=document.createElement('div');o.className='overlay';o.style.zIndex='130';
+  o.innerHTML=`<div class="auth" style="text-align:center">
+    <div class="disp" style="font-weight:800;font-size:1.1rem;margin-bottom:10px">🔑 Recovery Key</div>
+    <div class="dim" style="font-size:.78rem;line-height:1.6;margin-bottom:16px">${msg}</div>
+    <div class="mono" style="background:var(--s2);border:1px solid var(--gold);border-radius:10px;padding:14px;font-size:1rem;letter-spacing:1px;color:var(--gold);user-select:all">${key}</div>
+    <button class="btn ghost" style="width:100%;margin-top:12px" onclick="navigator.clipboard.writeText('${key}').then(()=>toast('Copied! Ab notepad mein bhi save karo.'))">Copy key</button>
+    <button class="btn gold" style="width:100%;margin-top:8px" id="kmDone">I saved it — continue</button>
+  </div>`;
+  document.body.appendChild(o);
+  document.getElementById('kmDone').onclick=()=>{o.remove();if(onDone)onDone();};
+}
+
+/* ── ACCOUNT (change password / regenerate key) ── */
+function openAccount(){
+  const o=document.createElement('div');o.className='overlay';o.id='accO';o.style.zIndex='125';
+  o.innerHTML=`<div class="auth">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="disp" style="font-weight:800">Account</div>
+      <span style="cursor:pointer;color:var(--tx3)" onclick="document.getElementById('accO').remove()">✕</span>
+    </div>
+    <div class="sect" style="margin-top:0">Change password</div>
+    <input id="cpCur" type="password" placeholder="Current password">
+    <input id="cpNew" type="password" placeholder="New password (6+ chars)">
+    <div class="err" id="cpErr"></div>
+    <button class="btn" style="width:100%" onclick="changePass()">Update password</button>
+    <div class="sect">Recovery key</div>
+    <div class="dim" style="font-size:.74rem;line-height:1.6;margin-bottom:10px">Lost your key, or never saved one? Generate a fresh key (the old one stops working).</div>
+    <button class="btn ghost" style="width:100%" onclick="regenKey()">Generate new recovery key</button>
+  </div>`;
+  document.body.appendChild(o);
+}
+async function changePass(){
+  const err=document.getElementById('cpErr');err.textContent='';
+  try{
+    await API.req('POST','/api/auth/change-password',{currentPassword:document.getElementById('cpCur').value,newPassword:document.getElementById('cpNew').value});
+    document.getElementById('accO').remove();toast('Password updated ✓');
+  }catch(e){err.textContent=e.message;}
+}
+async function regenKey(){
+  try{
+    const d=await API.req('POST','/api/auth/recovery-key');
+    document.getElementById('accO').remove();
+    showKeyModal(d.recoveryKey,'Your NEW recovery key. Old key is dead. Save this one properly!');
+  }catch(e){toast(e.message);}
 }
 
 /* ── JOURNEY ── */
@@ -481,6 +547,7 @@ async function refreshMe(){
 }
 function boot(){refreshMe();drawPenta('pentaHero',5,true);show('home');}
 document.getElementById('jText')?.addEventListener('input',updCC);
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
 window.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('jText').addEventListener('input',updCC);
   if(location.hash.startsWith('#s=')){checkShare();return;}

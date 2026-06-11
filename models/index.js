@@ -4,6 +4,7 @@ const UserSchema = new mongoose.Schema({
   email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
   name:     { type: String, required: true, trim: true },
   passHash: { type: String, required: true },
+  recoveryHash: { type: String, default: '' },
   createdAt:{ type: Date, default: Date.now }
 });
 

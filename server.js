@@ -18,6 +18,13 @@ app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+function genRecoveryKey(){
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  const block = () => Array.from(crypto.randomBytes(4)).map(b => chars[b % chars.length]).join('');
+  return `PSY-${block()}-${block()}-${block()}`;
+}
+const normKey = k => String(k || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+
 function auth(req, res, next) {
   const h = req.headers.authorization || '';
   const token = h.startsWith('Bearer ') ? h.slice(7) : null;
@@ -34,10 +41,53 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'Email, name and a 6+ char password required' });
     if (await User.findOne({ email: email.toLowerCase() }))
       return res.status(409).json({ error: 'Email already registered' });
-    const user = await User.create({ email, name, passHash: await bcrypt.hash(password, 10) });
+    const recoveryKey = genRecoveryKey();
+    const user = await User.create({ email, name, passHash: await bcrypt.hash(password, 10), recoveryHash: await bcrypt.hash(normKey(recoveryKey), 10) });
     const token = jwt.sign({ id: user._id, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, name: user.name });
+    res.json({ token, name: user.name, recoveryKey });
   } catch { res.status(500).json({ error: 'Registration failed' }); }
+});
+
+// Change password (logged in, requires current password)
+app.post('/api/auth/change-password', auth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) return res.status(400).json({ error: 'New password needs 6+ chars' });
+    const user = await User.findById(req.user.id);
+    if (!user || !(await bcrypt.compare(currentPassword || '', user.passHash)))
+      return res.status(401).json({ error: 'Current password is wrong' });
+    user.passHash = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    res.json({ ok: true });
+  } catch { res.status(500).json({ error: 'Could not change password' }); }
+});
+
+// Forgot password: email + recovery key -> set new password, rotate key
+app.post('/api/auth/forgot', async (req, res) => {
+  try {
+    const { email, recoveryKey, newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) return res.status(400).json({ error: 'New password needs 6+ chars' });
+    const user = await User.findOne({ email: (email || '').toLowerCase() });
+    if (!user) return res.status(401).json({ error: 'Email or recovery key is wrong' });
+    if (!user.recoveryHash) return res.status(400).json({ error: 'No recovery key on this account — sign in and generate one in Account settings' });
+    if (!(await bcrypt.compare(normKey(recoveryKey), user.recoveryHash)))
+      return res.status(401).json({ error: 'Email or recovery key is wrong' });
+    const fresh = genRecoveryKey();
+    user.passHash = await bcrypt.hash(newPassword, 10);
+    user.recoveryHash = await bcrypt.hash(normKey(fresh), 10);
+    await user.save();
+    const token = jwt.sign({ id: user._id, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, name: user.name, recoveryKey: fresh });
+  } catch { res.status(500).json({ error: 'Reset failed' }); }
+});
+
+// Regenerate recovery key (logged in)
+app.post('/api/auth/recovery-key', auth, async (req, res) => {
+  try {
+    const fresh = genRecoveryKey();
+    await User.findByIdAndUpdate(req.user.id, { recoveryHash: await bcrypt.hash(normKey(fresh), 10) });
+    res.json({ recoveryKey: fresh });
+  } catch { res.status(500).json({ error: 'Could not generate key' }); }
 });
 
 app.post('/api/auth/login', async (req, res) => {
@@ -128,5 +178,5 @@ app.get('/s/:id', (req, res) => res.redirect(`/#s=${req.params.id}`));
 
 // ── Boot ────────────────────────────────────────────────────
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/psyche10')
-  .then(() => app.listen(PORT, () => console.log(`Psyche v11 Rite running → http://localhost:${PORT}  [AI: ${process.env.ANTHROPIC_API_KEY ? 'Claude' : 'rule-based fallback'}]`)))
+  .then(() => app.listen(PORT, () => console.log(`Psyche v12 Keymaster running → http://localhost:${PORT}  [AI: ${process.env.ANTHROPIC_API_KEY ? 'Claude' : 'rule-based fallback'}]`)))
   .catch(err => { console.error('MongoDB connection failed:', err.message); process.exit(1); });
